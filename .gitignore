@@ -1,0 +1,39 @@
+# =========================
+# Docker & Local Data Volumes
+# =========================
+db_data/
+mysql/
+database/
+data/
+
+vulnerable-plugins/
+
+# =========================
+# Security & Environment
+# =========================
+.env
+.env.*
+*.pem
+*.key
+
+# =========================
+# Python Orchestrator
+# =========================
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# =========================
+# OS Generated Files
+# =========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
