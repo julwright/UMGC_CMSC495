@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMGC 495 - WP Vulnerability Scanner</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 40px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        input[type="text"] { width: 70%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        button { padding: 10px 20px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #2980b9; }
+        .error { background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb; }
+        .result-card { background-color: #fff; border: 1px solid #e1e4e8; border-left: 5px solid #e74c3c; border-radius: 4px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .plugin-title { margin-top: 0; color: #c0392b; }
+        .badge { background-color: #eee; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; color: #555; }
+        .assessment { background-color: #fdfdfd; padding: 10px; border: 1px dashed #ccc; border-radius: 4px; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>SLM Vulnerability Scanner</h1>
+    <p>Enter the target Docker container URL to extract plugin metadata and run SLM vulnerability synthesis.</p>
+    
+    <form method="POST" class="form-group">
+        <input type="text" name="url" placeholder="e.g., http://target-wp:8080" value="{{ url }}" required>
+        <button type="submit">Initiate Scan</button>
+    </form>
+
+    {% if error %}
+        <div class="error">
+            <strong>Error:</strong> {{ error }}
+        </div>
+    {% endif %}
+
+    {% if results %}
+        <h2>Scan Results</h2>
+        {% for item in results %}
+            <div class="result-card">
+                <h3 class="plugin-title">
+                    Plugin: {{ item.slug }} 
+                    <span class="badge">v{{ item.version }}</span>
+                </h3>
+                <h4>SLM Assessment:</h4>
+                <div class="assessment">{{ item.assessment }}</div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+</body>
+</html>

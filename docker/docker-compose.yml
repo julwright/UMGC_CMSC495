@@ -9,13 +9,11 @@ services:
       MYSQL_DATABASE: wordpress_db
       MYSQL_USER: wp_user
       MYSQL_PASSWORD: wp_password
-    volumes:
-      - db_data:/var/lib/mysql
     networks:
       - scanner_network
 
   target-wp:
-    image: wordpress:5.0
+    build: .  
     ports:
       - "8080:80"
     restart: always
@@ -24,15 +22,10 @@ services:
       WORDPRESS_DB_USER: wp_user
       WORDPRESS_DB_PASSWORD: wp_password
       WORDPRESS_DB_NAME: wordpress_db
-    volumes:
-      # This maps a local folder to the container's plugin directory
-      - ./vulnerable-plugins:/var/www/html/wp-content/plugins
-      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+    depends_on:
+      - db
     networks:
       - scanner_network
-
-volumes:
-  db_data:
 
 networks:
   scanner_network:
