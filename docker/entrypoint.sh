@@ -77,7 +77,7 @@ echo "Installing plugins..."
 
  
 else
-  echo "✅ WordPress already installed — skipping setup."
+  echo "WordPress already installed — skipping setup."
 fi
  
 # Keep the container alive 
