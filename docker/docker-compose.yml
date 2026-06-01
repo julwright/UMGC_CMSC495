@@ -2,31 +2,46 @@ version: '3.8'
 
 services:
   db:
-    image: mysql:5.7
-    restart: always
+    image: mysql:8.0
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: capstone_root_password
-      MYSQL_DATABASE: wordpress_db
-      MYSQL_USER: wp_user
-      MYSQL_PASSWORD: wp_password
-    networks:
-      - scanner_network
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: wppass
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  target-wp:
-    build: .  
+  wordpress:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "8080:80"
-    restart: always
     environment:
       WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: wp_user
-      WORDPRESS_DB_PASSWORD: wp_password
-      WORDPRESS_DB_NAME: wordpress_db
-    depends_on:
-      - db
-    networks:
-      - scanner_network
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: wppass
+      WORDPRESS_DB_NAME: wordpress
+      # Used by the entrypoint to auto-install WP
+      WP_URL: http://localhost:8080
+      WP_TITLE: "CMCS495 Group 3 Test Site"
+      WP_ADMIN_USER: admin
+      WP_ADMIN_PASSWORD: admin
+      WP_ADMIN_EMAIL: admin@test.local
+    volumes:
+      - wp_data:/var/www/html
+    # Disable security headers that might interfere with scanner testing
+    extra_hosts:
+      - "localhost:127.0.0.1"
 
-networks:
-  scanner_network:
-    driver: bridge
+volumes:
+  db_data:
+  wp_data:
