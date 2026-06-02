@@ -3,7 +3,7 @@ version: '3.8'
 services:
   db:
     image: mysql:8.0
-    restart: unless-stopped
+    restart: always
     environment:
       MYSQL_DATABASE: wordpress
       MYSQL_USER: wpuser
@@ -12,14 +12,16 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]      
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - scanner_network
 
   wordpress:
     build: .
-    restart: unless-stopped
+    restart: always
     depends_on:
       db:
         condition: service_healthy
@@ -30,7 +32,6 @@ services:
       WORDPRESS_DB_USER: wpuser
       WORDPRESS_DB_PASSWORD: wppass
       WORDPRESS_DB_NAME: wordpress
-      # Used by the entrypoint to auto-install WP
       WP_URL: http://localhost:8080
       WP_TITLE: "CMCS495 Group 3 Test Site"
       WP_ADMIN_USER: admin
@@ -38,10 +39,15 @@ services:
       WP_ADMIN_EMAIL: admin@test.local
     volumes:
       - wp_data:/var/www/html
-    # Disable security headers that might interfere with scanner testing
     extra_hosts:
       - "localhost:127.0.0.1"
+    networks:
+      - scanner_network
 
 volumes:
   db_data:
   wp_data:
+
+networks:
+  scanner_network:
+    driver: bridge

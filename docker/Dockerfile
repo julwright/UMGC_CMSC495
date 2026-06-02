@@ -15,8 +15,8 @@ RUN chown -R www-data:www-data /usr/src/wordpress/wp-content/plugins/
 COPY ./vulnerable-plugins/ /tmp/plugins/
 
 # Copy custom entrypoint
-COPY scripts/entrypoint.sh /entrypoint-custom.sh
-RUN chmod +x /entrypoint-custom.sh
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint-custom.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
 
