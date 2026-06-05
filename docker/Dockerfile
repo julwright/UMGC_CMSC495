@@ -1,3 +1,4 @@
+# Image to download for WP docker container
 FROM wordpress:6.4-php8.1-apache
 
 # Install WP-CLI and dependencies
@@ -14,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 RUN chown -R www-data:www-data /usr/src/wordpress/wp-content/plugins/
 COPY ./vulnerable-plugins/ /tmp/plugins/
 
-# Copy custom entrypoint
+# Copy custom entrypoint to set up environemnet further
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

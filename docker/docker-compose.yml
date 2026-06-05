@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8.0
@@ -11,20 +9,25 @@ services:
       MYSQL_ROOT_PASSWORD: rootpass
     volumes:
       - db_data:/var/lib/mysql
+    # Health checks for database, feeds the service_healthy condition
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]      
       interval: 5s
       timeout: 5s
       retries: 10
+    # Connects them one network for communication purposes.
     networks:
       - scanner_network
 
+# Word press server build is read in from Dockerfile.
   wordpress:
     build: .
     restart: always
+    # waits for db to be up and running
     depends_on:
       db:
         condition: service_healthy
+    # external port is 8080 
     ports:
       - "8080:80"
     environment:
@@ -32,6 +35,7 @@ services:
       WORDPRESS_DB_USER: wpuser
       WORDPRESS_DB_PASSWORD: wppass
       WORDPRESS_DB_NAME: wordpress
+      # Setting up basic WP options
       WP_URL: http://localhost:8080
       WP_TITLE: "CMCS495 Group 3 Test Site"
       WP_ADMIN_USER: admin
@@ -41,6 +45,7 @@ services:
       - wp_data:/var/www/html
     extra_hosts:
       - "localhost:127.0.0.1"
+    # Allows for DB and website to be on same network.
     networks:
       - scanner_network
 
