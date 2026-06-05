@@ -25,7 +25,7 @@ def convert_cve_to_chatm(input_file, output_file):
                 "messages": [
                     {
                     "role": "system",
-                    "content": "You are a WordPress security expert. Given the details of a plugin vulnerability, provide a clear, professional remediation strategy."
+                    "content": "You are a WordPress security expert. Given the name of a Wordpress plugin, identify if it is vulnerable and provide a detailed remediation plan if it is. If the plugin is not vulnerable, respond with 'No vulnerabilities found.'"
                     },
                     {
                         "role": "user",
