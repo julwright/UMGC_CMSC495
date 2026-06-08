@@ -4,7 +4,7 @@ set -e
 # Start Apache in the background via the official WP entrypoint
 docker-entrypoint.sh apache2-foreground &
 
-echo "Waiting for WordPress files to be available..."
+# Waiting for WordPress files to be available. 
 until [ -f /var/www/html/wp-config.php ]; do
   sleep 2
 done
@@ -14,14 +14,14 @@ sleep 5
 
 WP="wp --allow-root --path=/var/www/html"
 
-echo "Waiting for DB connection..."
+# Waiting for DB connection
 until $WP db check --quiet 2>/dev/null; do
   sleep 3
 done
 
 # Only install once
 if ! $WP core is-installed 2>/dev/null; then
-  echo "Installing WordPress core..."
+  # Install WP Core
   $WP core install \
     --url="${WP_URL}" \
     --title="${WP_TITLE}" \
@@ -30,13 +30,13 @@ if ! $WP core is-installed 2>/dev/null; then
     --admin_email="${WP_ADMIN_EMAIL}" \
     --skip-email
 
-echo "Installing plugins..."
+# Install plugins
   for zip in /tmp/plugins/*.zip; do
     echo "  → Installing: $(basename $zip)"
     $WP plugin install "$zip" --activate
   done
 
-  echo "Creating content to activate frontend plugin output..."
+ # Create content and pages for plugins 
 
  # Social-warfare, Gdpr compliance and cookie-notice auto load.
 
@@ -59,7 +59,6 @@ echo "Installing plugins..."
 
 
   # Setting up links to make sure everything is reachable
-  echo "Setting up permalinks..."
   $WP rewrite structure '/%postname%/'
   $WP rewrite flush
 
