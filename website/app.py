@@ -36,8 +36,9 @@ def fetch_rendered_html(url):
     """
     Fetches the fully rendered HTML of a webpage using Playwright, 
     waiting for all background network activity to finish.
+    Helps to bypass security from plugins.
     """
-    # Set up headless browser with UA to bypass cookies hiding.
+    # Set up headless browser with UA to bypass plugins hiding.
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
