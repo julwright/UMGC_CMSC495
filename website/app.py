@@ -1,14 +1,16 @@
 from flask import Flask, render_template, request
 import requests
-from bs4 import BeautifulSoup, Comment
+from playwright.sync_api import sync_playwright
 import re
 from urllib.parse import urlparse
+
 
 app = Flask(__name__)
 
 
 def get_base_url(url):
-    """Extract the base URL (scheme + host + port) from a full URL."""
+    """Extract the base URL (scheme + host + port) from a full URL.
+       Used to get the readme file for proper version. """
     parsed = urlparse(url)
     return f"{parsed.scheme}://{parsed.netloc}"
 
@@ -30,6 +32,34 @@ def get_plugin_version_from_readme(base_url, slug):
         pass
     return None
 
+def fetch_rendered_html(url):
+    """
+    Fetches the fully rendered HTML of a webpage using Playwright, 
+    waiting for all background network activity to finish.
+    """
+    # Set up headless browser with UA to bypass cookies hiding.
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(
+    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+)
+        
+        page = context.new_page()
+        
+        try:
+            page.goto(url, wait_until='networkidle')
+            # Extract the DOM as a string
+            rendered_html = page.content()
+            return rendered_html
+            
+        except Exception as e:
+            print(f"An error occurred while fetching the page: {e}")
+            return None
+            
+        finally:
+            # close browser
+            browser.close()
+
 
 def scan_wordpress(url):
     """
@@ -44,9 +74,7 @@ def scan_wordpress(url):
     found_plugins = {}
 
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        html = response.text
+        html = fetch_rendered_html(url)
         base_url = get_base_url(url)
 
         # Matches: /wp-content/plugins/SLUG/...?ver=X.X.X or &ver=X.X.X
@@ -71,13 +99,6 @@ def scan_wordpress(url):
             if slug not in found_plugins:
                 found_plugins[slug] = 'unknown'
 
-        # ── Pass 2: HTML comments (some plugins leave version in comments) ──
-        soup = BeautifulSoup(html, 'html.parser')
-        for comment in soup.find_all(string=lambda t: isinstance(t, Comment)):
-            for match in slug_pattern.finditer(comment):
-                slug = match.group(1)
-                if slug not in found_plugins:
-                    found_plugins[slug] = 'unknown'
 
         # ── Verify versions via readme.txt ──
         # The ver= param from enqueued assets is often wrong.
