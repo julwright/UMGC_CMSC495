@@ -11,8 +11,7 @@ from transformers import TrainingArguments
 from trl import SFTTrainer
 
 MODEL_ID = "meta-llama/Llama-3.1-8B-Instruct"
-DATA_PATH = "chatml_training_data.jsonl"
-OUTPUT_DIR = "./cve-remediation-model"
+DATA_PATH = "../model_data/chatml_training_data.jsonl"
 
 def train():
     
@@ -75,7 +74,7 @@ def train():
         weight_decay=0.01,
         lr_scheduler_type="cosine",
         seed=3407,
-        output_dir="llama3.1-8b-sft-output",
+        output_dir="../cve-remediation/",
         report_to="none",
         save_strategy="no", # python's pickle package will crash due to how unsloth rewrites transformers and trl.
     )

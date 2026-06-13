@@ -1,6 +1,6 @@
 import json
 
-def convert_cve_to_chatm(input_file, output_file):
+def convert_cve_to_chatml(input_file, output_file):
     with open(input_file, 'r', encoding='utf-8') as f:
         raw_data = json.load(f)
         
@@ -44,6 +44,6 @@ def convert_cve_to_chatm(input_file, output_file):
     print(f"Processed {processed_count} CVE entries and saved to {output_file}")
     
 if __name__ == "__main__":
-    INPUT_FILE = 'vuln_data.json'  # Path to your input JSON file
-    OUTPUT_FILE = 'chatml_training_data.jsonl'  # Path to your output JSONL file
-    convert_cve_to_chatm(INPUT_FILE, OUTPUT_FILE)
+    INPUT_FILE = '../model_data/vuln_data.json'  # Path to your input JSON file
+    OUTPUT_FILE = '../model_data/chatml_training_data.jsonl'  # Path to your output JSONL file
+    convert_cve_to_chatml(INPUT_FILE, OUTPUT_FILE)
