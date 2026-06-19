@@ -36,8 +36,12 @@ model = AutoModelForCausalLM.from_pretrained(
     torch_dtype=torch.bfloat16
 )
 
+class PluginInfo(BaseModel):
+    slug: str
+    version: str
+
 class AuditRequest(BaseModel):
-    plugins: List[str]
+    plugins: List[PluginInfo]
     
 class AuditResponse(BaseModel):
     remediation_plan: str
@@ -58,7 +62,7 @@ async def analyze_plugins(request: AuditRequest):
     
     for plugin in request.plugins:
         results = collection.get(
-            where={"slug": plugin}
+            where={"slug": plugin.slug}
         )
         
         if results and results['documents']:
@@ -73,7 +77,7 @@ async def analyze_plugins(request: AuditRequest):
                 
             if plugins_cves:
                 bundled_plugin_context = (
-                    f"=== VULNERABILITY REPORT FOR PLUGIN: {plugin} ===\n"
+                    f"=== VULNERABILITY REPORT FOR PLUGIN: {plugin.slug} ===\n"
                     f"Total Active Vulnerabilities Found: {len(plugins_cves)}\n\n"
                     + "\n\n----------------------------------------\n\n".join(plugins_cves)
                 )
@@ -123,7 +127,7 @@ async def analyze_plugins(request: AuditRequest):
     
     return AuditResponse(
         remediation_plan=remediation_text.strip(),
-        vulnerabilities_found=len(unique_cves)
+        vulnerabilities_found=total_cves_found
     )
     
 if __name__ == "__main__":

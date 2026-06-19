@@ -121,15 +121,24 @@ def scan_wordpress(url):
         return None, f"Connection Error: Could not reach {url}."
 
 
-def query_slm(plugin_slug, plugin_version):
+def query_llm(plugins):
     """
-    Placeholder: Send plugin information to LLM for threat analysis.
+    Send all detected plugins to the FastAPI remediation endpoint.
+    plugins: list of {'slug': str, 'version': str}
     """
-    # TODO: Connect to LLM FastAPI
-    return {
-        "threat_summary": f"Vulnerability found in '{plugin_slug}' version {plugin_version}.",
-        "remediation": "Delete the plugin and find a new alternative."
-    }
+    try:
+        response = requests.post(
+            "http://localhost:8000/api/remediate",
+            json={"plugins": plugins},
+            timeout=120  # model inference can be slow
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data["remediation_plan"], data["vulnerabilities_found"], None
+    except requests.exceptions.ConnectionError:
+        return None, 0, "Could not connect to the remediation API. Is it running?"
+    except requests.exceptions.RequestException as e:
+        return None, 0, f"API error: {e}"
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -143,23 +152,21 @@ def index():
 
         # Fingerprint the website, get URL and return plugin data
         plugins, error = scan_wordpress(target_url)
-
         if error:
             error_message = error
         elif not plugins:
             error_message = "No plugins detected or target is not a WordPress site."
         else:
-            # Query the SLM for each found plugin
-            scan_results = []
-            for plugin in plugins:
-                slm_data = query_slm(plugin['slug'], plugin['version'])
-                scan_results.append({
-                    'slug': plugin['slug'],
-                    'version': plugin['version'],
-                    'threat_summary': slm_data['threat_summary'],
-                    'remediation': slm_data['remediation']
-                })
-
+            remediation, vuln_count, api_error = query_llm(plugins)
+        if api_error:
+            error_message = api_error
+        else:
+            scan_results = {
+                "plugins": plugins,
+                "remediation_plan": remediation,
+                "vulnerabilities_found": vuln_count
+            }
+        
     return render_template(
         'index.html',
         results=scan_results,

@@ -38,16 +38,23 @@
 
     {% if results %}
         <h2>Scan Results</h2>
-        {% for item in results %}
-            <div class="result-card">
-                <h3 class="plugin-title">
-                    Plugin: {{ item.slug }} 
-                    <span class="badge">v{{ item.version }}</span>
-                </h3>
-                <h4>SLM Assessment:</h4>
-                <div class="assessment">{{ item.assessment }}</div>
+
+        <div class="result-card" style="border-left-color: #3498db;">
+            <h3 style="margin-top: 0; color: #2c3e50;">
+                Detected Plugins
+                <span class="badge">{{ results.vulnerabilities_found }} vulnerabilit{{ 'y' if results.vulnerabilities_found == 1 else 'ies' }} found</span>
+            </h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                {% for plugin in results.plugins %}
+                    <span class="badge">{{ plugin.slug }} v{{ plugin.version }}</span>
+                {% endfor %}
             </div>
-        {% endfor %}
+        </div>
+
+        <div class="result-card">
+            <h3 class="plugin-title">Remediation Plan</h3>
+            <div class="assessment">{{ results.remediation_plan }}</div>
+        </div>
     {% endif %}
 </div>
 
