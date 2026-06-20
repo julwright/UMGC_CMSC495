@@ -42,77 +42,99 @@ class PluginInfo(BaseModel):
 
 class AuditRequest(BaseModel):
     plugins: List[PluginInfo]
-    
+
 class AuditResponse(BaseModel):
     remediation_plan: str
     vulnerabilities_found: int
-    
+
+
+TRAINED_SYSTEM_PROMPT = (
+    "You are a WordPress security expert. Given the name of a Wordpress plugin, "
+    "identify if it is vulnerable and provide a detailed remediation plan if it is. "
+    "If the plugin is not vulnerable, respond with 'No vulnerabilities found.'"
+)
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "gpu_available": torch.cuda.is_available()}
 
+
 @app.post("/api/remediate", response_model=AuditResponse)
 async def analyze_plugins(request: AuditRequest):
+    """
+    Call the model once per CVE using the exact prompt format it was trained on,
+     then group the results by plugin.
+    """
     if not request.plugins:
-        raise HTTPException(status_code=400, details="The plugin list cannot be empty.")
-    
-    retrieved_contexts = []
+        raise HTTPException(status_code=400, detail="The plugin list cannot be empty.")
+
+    plugin_sections = []
     total_cves_found = 0
-    unique_cves = set()
-    
+
     for plugin in request.plugins:
-        results = collection.get(
-            where={"slug": plugin.slug}
-        )
-        
-        if results and results['documents']:
-            plugins_cves = []
-            
-            for doc, meta in zip(results['documents'], results['metadatas']):
-                cve_id = meta['cve_id']
-                score = meta['score']
-                
-                plugins_cves.append(doc)
-                total_cves_found += 1
-                
-            if plugins_cves:
-                bundled_plugin_context = (
-                    f"=== VULNERABILITY REPORT FOR PLUGIN: {plugin.slug} ===\n"
-                    f"Total Active Vulnerabilities Found: {len(plugins_cves)}\n\n"
-                    + "\n\n----------------------------------------\n\n".join(plugins_cves)
-                )
-                retrieved_contexts.append(bundled_plugin_context)
-    
-    if not retrieved_contexts:
+        results = collection.get(where={"slug": plugin.slug})
+
+        if not (results and results["documents"]):
+            continue
+
+        cve_blocks = []
+        for doc, meta in zip(results["documents"], results["metadatas"]):
+            cve_id = meta["cve_id"]
+            score = meta["score"]
+
+         
+            description = ""
+            if "Description:" in doc:
+                description = doc.split("Description:", 1)[1]
+                description = description.split("Remediation/Fix:", 1)[0].strip()
+
+            # Exact training-time user prompt format (chatML_data.py).
+            user_prompt = (
+                f"Vulnerability Report:\n"
+                f"CVE: {cve_id}\n"
+                f"Plugin: {plugin.slug}\n"
+                f"Severity Score: {score}\n"
+                f"Description: {description}"
+            )
+
+            remediation = generate_remediation([
+                {"role": "system", "content": TRAINED_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ])
+
+            cve_blocks.append(f"[{cve_id}] (Severity {score})\n{remediation}")
+            total_cves_found += 1
+
+        if cve_blocks:
+            label = "vulnerability" if len(cve_blocks) == 1 else "vulnerabilities"
+            section = (
+                f"=== PLUGIN: {plugin.slug} (v{plugin.version}) - "
+                f"{len(cve_blocks)} {label} ===\n\n"
+                + "\n\n".join(cve_blocks)
+            )
+            plugin_sections.append(section)
+
+    if not plugin_sections:
         return AuditResponse(
-            remediation_plan="No known vulnerabilities were found in your vector database for the provided plugin.",
+            remediation_plan="No known vulnerabilities were found in your vector "
+                             "database for the provided plugins.",
             vulnerabilities_found=0
         )
-        
-    context_str = "\n\n========================================\n\n".join(retrieved_contexts)
-    
-    system_prompt = (
-        "You are an elite WordPress security expert. Review the provided vulnerability data "
-        "for the user's active plugins. Synthesize a comprehensive, prioritized remediation "
-        "plan. Group critical findings together, recommend specific patches or workarounds, "
-        "and explicitly state if a plugin needs to be deleted due to unpatched risks."
+
+    final_plan = "\n\n========================================\n\n".join(plugin_sections)
+    return AuditResponse(
+        remediation_plan=final_plan,
+        vulnerabilities_found=total_cves_found
     )
-    
-    user_prompt = f"Here is the vulnerability raw data for my plugins:\n\n{context_str}\n\nPlease generate my remediation plan."
-    
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ]
-    
+
+def generate_remediation(messages):
+    """Run one chat completion through the fine-tuned model and return the text."""
     formatted_input = tokenizer.apply_chat_template(
         messages,
         tokenize=False,
         add_generation_prompt=True
     )
-    
     inputs = tokenizer(formatted_input, return_tensors="pt").to("cuda")
-    
+
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
@@ -121,16 +143,12 @@ async def analyze_plugins(request: AuditRequest):
             do_sample=True,
             eos_token_id=tokenizer.eos_token_id
         )
-        
+
     generated_tokens = outputs[0][inputs['input_ids'].shape[1]:]
-    remediation_text = tokenizer.decode(generated_tokens, skip_special_tokens=True)
-    
-    return AuditResponse(
-        remediation_plan=remediation_text.strip(),
-        vulnerabilities_found=total_cves_found
-    )
-    
+    return tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
+
+
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
