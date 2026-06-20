@@ -8,7 +8,7 @@ from typing import List
 from chromadb.utils import embedding_functions
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-MODEL_PATH = "../cve-remediation"
+MODEL_PATH = "CoolGuy320/wordpress-plugin-remediation"
 DB_PATH = "../chroma_db"
 COLLECTION_NAME = "wp_vulnerabilities"
 

@@ -130,7 +130,7 @@ def query_llm(plugins):
         response = requests.post(
             "http://localhost:8000/api/remediate",
             json={"plugins": plugins},
-            timeout=120  # model inference can be slow
+            #timeout=120  # model inference can be slow
         )
         response.raise_for_status()
         data = response.json()
