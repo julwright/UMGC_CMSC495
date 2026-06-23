@@ -3,6 +3,10 @@
 # flash-attn built on wheel from https://huggingface.co/Wildminder/AI-windows-whl/resolve/main/flash_attn-2.8.3%2Bd20260121.cu130torch2.10.0cxx11abiTRUE-cp312-cp312-win_amd64.whl
 # trained on RTX 5070, pytorch 2.10.0, cuda 13.0, python 3.12
 
+"""
+This script fine-tunes a pre-trained LLaMA 3.1 model on a dataset of WordPress plugin vulnerabilities formatted in ChatML.
+"""
+
 from unsloth import FastLanguageModel
 from unsloth.chat_templates import get_chat_template
 import torch

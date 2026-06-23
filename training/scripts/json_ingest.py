@@ -1,3 +1,9 @@
+# pip install chromadb tqdm
+
+"""
+This script ingests a JSON dataset of WordPress plugin vulnerabilities and stores it in a ChromaDB collection.
+"""
+
 import json
 import os
 from tqdm import tqdm

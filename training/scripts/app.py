@@ -1,4 +1,12 @@
-import os
+# pip install torch chromadb fastapi transformers
+
+"""
+This script implements a FastAPI application that provides an API for analyzing WordPress plugins
+for known vulnerabilities and generating remediation plans. 
+It uses a fine-tuned language model to generate detailed remediation instructions based on the plugin's CVE
+data retrieved from a ChromaDB collection.
+"""
+
 import torch
 import chromadb
 from fastapi import FastAPI, HTTPException
@@ -19,7 +27,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust this in production to point to your specific frontend URL
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,3 +1,7 @@
+"""
+This script converts a JSON file containing CVE data into a ChatML format suitable for training a language model.
+"""
+
 import json
 
 def convert_cve_to_chatml(input_file, output_file):

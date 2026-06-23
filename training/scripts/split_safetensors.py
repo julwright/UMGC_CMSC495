@@ -1,3 +1,12 @@
+# pip install torch safetensors
+
+"""
+This script reads multiple safetensor files from a specified input directory,
+redistributes all weights into new, evenly sized shards, and saves them to an output directory.
+It also generates a Hugging Face index layout for the newly created shards.
+This script was originally needed to fit safetensor files into the 2GB limit for files on GitHub.
+"""
+
 import json
 import os
 import glob
