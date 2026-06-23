@@ -1,4 +1,4 @@
-# pip install torch safetensors
+# pip install safetensors
 
 """
 This script reads multiple safetensor files from a specified input directory,
@@ -10,7 +10,6 @@ This script was originally needed to fit safetensor files into the 2GB limit for
 import json
 import os
 import glob
-import torch
 from safetensors import safe_open
 from safetensors.torch import save_file
 

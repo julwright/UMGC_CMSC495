@@ -1,5 +1,4 @@
 import requests
-import json
 
 # The endpoint configured in your app.py
 API_URL = "http://localhost:8000/api/remediate"
